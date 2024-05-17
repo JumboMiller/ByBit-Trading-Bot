@@ -1,66 +1,69 @@
-const axios = require('axios');
-const crypto = require('crypto');
-const { apiKey, apiSecret, baseUrl } = require('./config');
+require('dotenv').config();
+const { RestClientV5 } = require('bybit-api');
 
-// Function to generate the signature for requests
-function generateSignature(params, secret) {
-  const orderedParams = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
-  return crypto.createHmac('sha256', secret).update(orderedParams).digest('hex');
-}
+const API_KEY = process.env.BYBIT_API_KEY;
+const API_SECRET = process.env.BYBIT_API_SECRET;
 
-// Function to make API requests
-async function makeRequest(endpoint, method = 'GET', params = {}) {
-  const timestamp = Date.now();
-  params.api_key = apiKey;
-  params.timestamp = timestamp;
-  const signature = generateSignature(params, apiSecret);
-  params.sign = signature;
+const client = new RestClientV5({
+    key: API_KEY,
+    secret: API_SECRET,
+    estnet: false, 
+});
 
+async function getServerTime() {
   try {
-    const response = await axios({
-      method,
-      url: `${baseUrl}${endpoint}`,
-      params,
-    });
-    return response.data;
+    const timeResponse = await client.getServerTime();
+    console.log(timeResponse)
+    return timeResponse.time;
   } catch (error) {
-    console.error(`Error making request to ${endpoint}:`, error.message);
+    console.error('Error fetching server time:', error);
     throw error;
   }
 }
 
-// Example function to get server time
-async function getServerTime() {
-  const endpoint = '/v2/public/time';
-  return await makeRequest(endpoint);
-}
-
-// Example function to place an order
-async function placeOrder(symbol, side, qty, price) {
-  const endpoint = '/v2/private/order/create';
-  const params = {
-    symbol,
-    side,
-    order_type: 'Limit',
-    qty,
-    price,
-    time_in_force: 'GoodTillCancel'
-  };
-  return await makeRequest(endpoint, 'POST', params);
-}
-
-// Main function to run the bot
-async function runBot() {
+async function placeMarketOrder(category,symbol,qty,side,orderType) {
   try {
-    const time = await getServerTime();
-    console.log('Server time:', time);
-
-    // Example order placement
-    /*const order = await placeOrder('BTCUSD', 'Buy', 1, 30000);
-    console.log('Order placed:', order);*/
+    const orderResponse = await client.submitOrder({
+        category,
+        symbol,
+        side,
+        orderType,
+        qty,
+    });
+    return orderResponse;
   } catch (error) {
-    console.error('Error running bot:', error.message);
+        console.error('Error placing market order:', error);
+        throw error;
   }
 }
 
-runBot();
+async function run() {
+  try {
+    const serverTime = await getServerTime();
+    const buyTime = new Date(serverTime + 5000); // Buy after 5 s
+    
+    console.log(`Current Server Time: ${new Date(serverTime).toISOString()}`);
+    console.log(`Scheduled Buy Time: ${buyTime.toISOString()}`);
+    
+    const waitTime = buyTime - new Date().getTime();
+    console.log(`Waiting for ${waitTime / 1000} seconds...`);
+
+    setTimeout(async () => {
+    
+        const category = 'spot'; //" Spot forever "
+        const symbol = 'FTMUSDT'; // Change to desired trading pair
+        const qty = '4'; // Change to desired quantity
+        const side = 'Sell' // Sell <-> Buy
+        const orderType = 'Market'; // Buy
+
+        console.log('Placing market order...');
+
+        const orderResult = await placeMarketOrder(category,symbol,qty,side,orderType);
+        console.log('Order Result:', orderResult);
+    }, waitTime);
+  } catch (error) {
+        console.error('Error in trading bot:', error);
+  }
+}
+
+run();
