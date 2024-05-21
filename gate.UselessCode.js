@@ -1,5 +1,5 @@
 require('dotenv').config();
-const axios = require('axios');
+//const axios = require('axios');
 const crypto = require('crypto');
 
 const API_KEY = process.env.GATE_API_KEY;
