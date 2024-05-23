@@ -15,11 +15,11 @@ async function getServerTimeFunction() {
   }
 }
 
-async function buyMarket(symbol, amount) {
+async function buyMarket(symbol, amount, side) {
   const apiInstance = new GateApi.SpotApi(client);
   const order = new GateApi.Order();
   order.currencyPair = symbol;
-  order.side = 'buy';
+  order.side = side;
   order.type = 'market';
   order.account = 'spot';
   order.timeInForce = 'ioc';
@@ -34,7 +34,7 @@ async function buyMarket(symbol, amount) {
 }
 
 async function main() {
-  const targetTime = moment.tz('2024-05-21 00:36:01', 'YYYY-MM-DD HH:mm:ss', 'UTC'); 
+  const targetTime = moment.tz('2024-05-23 13:03:00', 'YYYY-MM-DD HH:mm:ss', 'UTC'); 
   
   while (true) {
     const serverTime = await getServerTimeFunction();
@@ -45,11 +45,19 @@ async function main() {
 
     if (currentTime.isSameOrAfter(targetTime)) {
       console.log('Target time reached. Placing market order... VZLOM PENTAGONA');
-      await buyMarket('FTM_USDT', 5); 
+      /*for (let index = 0; index < 1; index++) {
+       await buyMarket('HLG_USDT', 5, 'buy'); 
+      } */
+      console.log('Waiting for selling')
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      for (let index = 0; index < 1; index++) {
+        await buyMarket('HLG_USDT', 270 , 'sell'); 
+      }
       break;
     }
 
     await new Promise(resolve => setTimeout(resolve, 250));
+    
   }
 }
 
