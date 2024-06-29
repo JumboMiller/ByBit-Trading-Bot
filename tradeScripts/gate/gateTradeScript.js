@@ -1,9 +1,9 @@
 require('dotenv').config();
 const GateApi = require('gate-api');
 const moment = require('moment-timezone');
-const winston = require('winston'); // Для логирования
+const winston = require('winston'); 
 
-// Настройка логирования с добавлением временных меток до миллисекунд
+// Настройка логирования 
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -12,16 +12,18 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: 'trade_bot.log' })
+    new winston.transports.File({ filename: 'trade_gate_zex_bot.log' })
   ]
 });
 
+// Нетрогать
 const client = new GateApi.ApiClient();
 client.setApiKeySecret(process.env.GATE_API_KEY, process.env.GATE_API_SECRET);
 
-const orderPair = process.env.ORDER_PAIR || 'FTM_USDT'; // Используйте подходящую переменную среды
-const quoteCurrency = 'USDT'; // Предполагается, что валюта котировки всегда USDT
+// Здесь выбрать монетную пару 
+const orderPair = 'ZEX_USDT' 
 
+//Получить время сервера 
 async function getServerTime() {
   const apiInstance = new GateApi.SpotApi(client);
   try {
@@ -33,19 +35,9 @@ async function getServerTime() {
   }
 }
 
-async function getCurrentPrice(symbol) {
-  const apiInstance = new GateApi.SpotApi(client);
-  try {
-    const ticker = await apiInstance.listTickers({ currencyPair: symbol });
-    return parseFloat(ticker.body[0].last);
-  } catch (error) {
-    logger.error('Error fetching current price:', error);
-    return null;
-  }
-}
-
+//Получение баланса определённой монеты для быстрой продажи
 async function getBalance(currency) {
-  const apiInstance = new GateApi.WalletApi(client);
+  const apiInstance = new GateApi.SpotApi(client); 
   try {
     const balances = await apiInstance.listSpotAccounts();
     const balance = balances.body.find(b => b.currency === currency);
@@ -56,26 +48,19 @@ async function getBalance(currency) {
   }
 }
 
+//Создания ордера на покупку/продажу
 async function placeMarketOrder(symbol, amountInUSD, side) {
   const apiInstance = new GateApi.SpotApi(client);
-  let amount;
-
-  if (side === 'buy') {
-    const currentPrice = await getCurrentPrice(symbol);
-    if (!currentPrice) {
-      logger.error('Unable to get current price for', symbol);
-      return;
-    }
-    amount = (amountInUSD / currentPrice).toFixed(8); // Рассчитать количество монет
-  } else if (side === 'sell') {
+  let amount = amountInUSD;
+  if (side === 'sell') {
     const baseCurrency = symbol.split('_')[0];
-    amount = await getBalance(baseCurrency); // Получить баланс имеющихся монет
+    amount = await getBalance(baseCurrency); 
     if (amount === 0) {
       logger.error(`No balance available for ${baseCurrency}`);
       return;
     }
   }
-
+  //Подготовка переменных для ордера (стоит перенести для ускорение в global workplace)
   const order = new GateApi.Order();
   order.currencyPair = symbol;
   order.side = side;
@@ -83,7 +68,6 @@ async function placeMarketOrder(symbol, amountInUSD, side) {
   order.account = 'spot';
   order.timeInForce = 'ioc';
   order.amount = amount.toString();
-
   try {
     const orderResult = await apiInstance.createOrder(order);
     logger.info('Order Result:', orderResult);
@@ -93,12 +77,13 @@ async function placeMarketOrder(symbol, amountInUSD, side) {
 }
 
 async function main() {
-  const targetTime = moment.tz('2024-06-13 02:47:00', 'YYYY-MM-DD HH:mm:ss.SSS', 'UTC');
-  const amountToSpend = 10; // Сумма в долларах для покупки
+  //Выставить время покупки по британии UTC
+  const targetTime = moment.tz('2024-06-30 10:00:00.000', 'YYYY-MM-DD HH:mm:ss.SSS', 'UTC');
+  //Сумма в долларах для покупки
+  const amountToSpend = 60; 
 
   while (true) {
     const serverTime = await getServerTime();
-
     if (!serverTime) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       continue;
@@ -109,15 +94,13 @@ async function main() {
     const timeDifference = targetTime.diff(currentTime);
 
     if (timeDifference <= 0) {
-      logger.info('Target time reached. Placing market order...');
       await placeMarketOrder(orderPair, amountToSpend, 'buy');
-      logger.info('Waiting for selling');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await placeMarketOrder(orderPair, null, 'sell'); // Продать все имеющиеся монеты
+      logger.info('Target time reached. Placing market order all ready gone and now waiting for selling');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await placeMarketOrder(orderPair, null, 'sell'); 
       break;
     } else {
-      // ждем 150 мс
-      const waitTime = 150;
+      const waitTime = 50;
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
   }

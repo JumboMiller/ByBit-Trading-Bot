@@ -1,0 +1,29 @@
+ZEX_USDT
+{"amount":"416.24","createTime":"2024-06-27 13:00:03.924","currencyPair":"ZEX_USDT","id":"10263608599",
+"level":"info","message":"Trade data:","price":"0.144","sequenceId":"119","side":"sell"}
+
+COOKIE_USDT
+
+{"amount":"116.97","createTime":"2024-06-13 13:00:05.403","currencyPair":"COOKIE_USDT","id":"9910621832",
+"level":"info","message":"Trade data:","price":"0.176","sequenceId":"236","side":"sell"}
+
+{"amount":"153.43","createTime":"2024-06-13 13:00:05.403","currencyPair":"COOKIE_USDT","id":"9910621831",
+"level":"info","message":"Trade data:","price":"0.176","sequenceId":"235","side":"sell"}
+
+{"amount":"168.54","createTime":"2024-06-13 13:00:05.403","currencyPair":"COOKIE_USDT","id":"9910621830",
+"level":"info","message":"Trade data:","price":"0.17601","sequenceId":"234","side":"sell"}
+
+BACGAMES_USDT 
+// неповторять 
+2024-06-03 15:00:35 BACGAMES_USDT Продать 1.66250(USDT) 1.66250(USDT) 16.6 / 16.6 100.00% 27.5975USDT
+
+HLG_USDT
+// Читать страницу с вкладки Buy 
+2024-05-23 16:03:59 HLG_USDT Продать 0.01818(USDT) Маркет 270.0 / 270.0 100.00% 4.908871USDT Готово
+
+TRALA_USDT
+// Читать страницу с вкладки Buy 
+
+PARAM_USDT 
+2024-05-6
+//Читать страницу с вкладки Buy 
